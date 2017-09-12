@@ -88,11 +88,22 @@ for x in evvalues[1:]:
 for x in svvalues:
     A_ub = np.vstack((A_ub, i2b(x[1], 0)))
 A_ub = A_ub.T
-print(A_ub)
 
 ##
 # b_ub
 #
 
+b_ub = np.full(12, init_bal, dtype=float)
 
+for x in ifvalues:
+    b_ub += x[0]*i2b(x[1], 1)
+for x in efvalues:
+    b_ub -= x[0]*i2b(x[1], 1)
+
+##
+# bounds
+#
+bounds = []
+for x in evvalues + svvalues:
+    bounds.append((x[0], float('inf')))
 
