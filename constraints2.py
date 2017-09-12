@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 
 def m2i(m1, m2= None):
     if m2 == None:
@@ -29,6 +30,8 @@ svvalues = []
 for element in svd:
     svlabels.append(element)
     svvalues.append(svd[element])
+with open('labels/svlabels', 'wb') as fp:
+    pickle.dump(svlabels, fp)
 
 ##
 # income fixed
@@ -41,6 +44,8 @@ ifvalues = []
 for element in ifd:
     iflabels.append(element)
     ifvalues.append(ifd[element])
+with open('labels/iflabels', 'wb') as fp:
+    pickle.dump(iflabels, fp)
 
 # income variable (YAGNI)
 
@@ -55,6 +60,8 @@ efvalues = []
 for element in efd:
     eflabels.append(element)
     efvalues.append(efd[element])
+with open('labels/eflabels', 'wb') as fp:
+    pickle.dump(eflabels, fp)
 
 ##
 # expenses variable
@@ -69,6 +76,8 @@ evvalues = []
 for element in evd:
     evlabels.append(element)
     evvalues.append(evd[element])
+with open('labels/evlabels', 'wb') as fp:
+    pickle.dump(evlabels, fp)
 
 ##
 # A_ub
@@ -88,6 +97,8 @@ for x in evvalues[1:]:
 for x in svvalues:
     A_ub = np.vstack((A_ub, i2b(x[1], 0)))
 A_ub = A_ub.T
+# write the file
+np.save('linear_bounds/A_ub.npy', A_ub)
 
 ##
 # b_ub
@@ -99,6 +110,8 @@ for x in ifvalues:
     b_ub += x[0]*i2b(x[1], 1)
 for x in efvalues:
     b_ub -= x[0]*i2b(x[1], 1)
+# write the file
+np.save('linear_bounds/b_ub.npy', b_ub)
 
 ##
 # bounds
@@ -106,4 +119,6 @@ for x in efvalues:
 bounds = []
 for x in evvalues + svvalues:
     bounds.append((x[0], float('inf')))
-
+# write the file
+with open('linear_bounds/bounds.txt', 'w') as fp:
+    fp.write('\n'.join('%s %s' % x for x in bounds))
