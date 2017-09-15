@@ -2,6 +2,10 @@ import numpy as np
 import pickle
 import pandas as pd
 
+# guiding formula
+# bal + sum(inc) - sum(exp) > sav
+# sav_v + sum(exp_v) < bal_f + sum(inc_f) - sum(exp_f)
+
 def m2i(m1, m2= None):
     if m2 == None:
         return [(m1 - 9)%12]
@@ -34,12 +38,12 @@ init_bal = sum(ibfd.values())
 svd = {'two months rent': [4000, m2i(9,8)],
        'extra months rent': [2000, m2i(8)]
        }
-with open('labels/svlabels', 'wb') as fp:
+with open('svlabels', 'wb') as fp:
     pickle.dump(sorted(svd), fp)
 
 def write_npy_matrix(filename, dictionary):
-    matrix = np.matrix([i2b(dictionary[label][1], 0) for label in dictionary])
-    np.save(filename + '.npy', matrix)
+    matrix = np.matrix([i2b(dictionary[label][1], 0) for label in sorted(dictionary)])
+    np.save('solution_npy/' + filename + '.npy', matrix)
 
 write_npy_matrix('svmx', svd)
 
@@ -49,15 +53,13 @@ write_npy_matrix('svmx', svd)
 ifd = {'northrop fall': [3000, m2i(9,11)],
        'northrop spring': [3000, m2i(1,8)]
        }
-with open('labels/iflabels', 'wb') as fp:
-    pickle.dump(sorted(svd), fp)
 
 def write_csv_matrix(filename, dictionary):
-    matrix = np.matrix([dictionary[label][0]*i2b(dictionary[label][1],0) for label in dictionary])
+    matrix = np.matrix([dictionary[label][0]*i2b(dictionary[label][1],0) for label in sorted(dictionary)])
     matrix = np.vstack(([['sep','oct','nov','dec','jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug']], matrix))
     matrix = np.vstack(([init_bal]+sorted(dictionary),matrix.T)).T
     df = pd.DataFrame(matrix)
-    df.to_csv(filename + ".csv")
+    df.to_csv('solution_csv/' + filename + ".csv")
 
 write_csv_matrix('ifmx', ifd)
 
@@ -69,8 +71,6 @@ write_csv_matrix('ifmx', ifd)
 efd = {'gas and grocery': [1200, range(12)],
        'UCSB tuition': [4000, m2i(9) + m2i(1) + m2i(5)]
        }
-with open('labels/eflabels', 'wb') as fp:
-    pickle.dump(sorted(efd), fp)
 write_csv_matrix('efmx', efd)
 
 ##
@@ -81,7 +81,7 @@ evd = {'rent': [1300, m2i(11, 8)],
        'vacation': [0, m2i(6) + m2i(8)],
        'eating out': [200, range(12)]
        }
-with open('labels/evlabels', 'wb') as fp:
+with open('evlabels', 'wb') as fp:
     pickle.dump(sorted(evd), fp)
 
 write_npy_matrix('evmx', evd)
@@ -96,6 +96,7 @@ for x in sorted(evd)[1:]:
 for x in sorted(svd):
     A_ub = np.vstack((A_ub, i2b(svd[x][1], 0)))
 A_ub = A_ub.T
+print(A_ub)
 # write the file
 np.save('linear_bounds/A_ub.npy', A_ub)
 
@@ -108,8 +109,9 @@ b_ub = np.full(12, init_bal, dtype=float)
 for label in ifd:
     b_ub += ifd[label][0]*i2b(ifd[label][1], 1)
 for label in efd:
-    b_ub += efd[label][0] * i2b(efd[label][1], 1)
+    b_ub -= efd[label][0] * i2b(efd[label][1], 1)
 # write the file
+print(b_ub)
 np.save('linear_bounds/b_ub.npy', b_ub)
 
 ##
@@ -119,3 +121,5 @@ bounds = [(evd[l][0], float('inf')) for l in sorted(evd)] + [(svd[l][0], float('
 # write the file
 with open('linear_bounds/bounds.txt', 'w') as fp:
     fp.write('\n'.join('%s %s' % x for x in bounds))
+
+print(bounds)

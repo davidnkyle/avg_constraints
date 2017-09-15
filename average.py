@@ -38,18 +38,18 @@ elif status == 0:
         raise(Exception('not a big enough sample size'))
 
     center = find_center(A_ub, b_ub, cube_low, cube_high, 100000)
-    print(center)
+    np.save('center.npy', center)
 
     # savings files
     def write_csv_matrix2(importname, labelname, exportname):
-        with open('labels/'+labelname, 'rb') as f:
+        with open(labelname, 'rb') as f:
             lab = pickle.load(f)
-        mx = np.load(importname + '.npy')
+        mx = np.load('solution_npy/'+importname + '.npy')
         mx = (mx.T * center[:mx.shape[0]]).T
         mx = np.vstack(([['sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug']], mx))
         mx = np.vstack(([0] + lab, mx.T)).T
         df = pd.DataFrame(mx)
-        df.to_csv(exportname + ".csv")
+        df.to_csv('solution_csv/'+exportname + ".csv")
 
     write_csv_matrix2('evmx', 'evlabels', 'evmx')
     write_csv_matrix2('svmx', 'svlabels', 'svmx')
