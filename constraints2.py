@@ -35,14 +35,14 @@ init_bal = sum(ibfd.values())
 ##
 # savings variable
 #
-svd = {'two months rent': [4000, m2i(9,8)],
-       'extra months rent': [2000, m2i(8)]
+svd = {'two months rent': [4000,float('inf'), m2i(9,8)],
+       'extra months rent': [2000, float('inf'),m2i(8)]
        }
 with open('svlabels', 'wb') as fp:
     pickle.dump(sorted(svd), fp)
 
 def write_npy_matrix(filename, dictionary):
-    matrix = np.matrix([i2b(dictionary[label][1], 0) for label in sorted(dictionary)])
+    matrix = np.matrix([i2b(dictionary[label][2], 0) for label in sorted(dictionary)])
     np.save('solution_npy/' + filename + '.npy', matrix)
 
 write_npy_matrix('svmx', svd)
@@ -76,10 +76,10 @@ write_csv_matrix('efmx', efd)
 ##
 # expenses variable
 #
-evd = {'rent': [1300, m2i(11, 8)],
-       'student loans': [0, range(12)],
-       'vacation': [0, m2i(6) + m2i(8)],
-       'eating out': [200, range(12)]
+evd = {'rent': [1300, float('inf'),m2i(11, 8)],
+       'student loans': [0, float('inf'), range(12)],
+       'vacation': [0, float('inf'), m2i(6) + m2i(8)],
+       'eating out': [200, float('inf'), range(12)]
        }
 with open('evlabels', 'wb') as fp:
     pickle.dump(sorted(evd), fp)
@@ -90,11 +90,11 @@ write_npy_matrix('evmx', evd)
 # A_ub
 #
 
-A_ub = np.array(i2b(evd[sorted(evd)[0]][1], 1))
+A_ub = np.array(i2b(evd[sorted(evd)[0]][2], 1))
 for x in sorted(evd)[1:]:
-    A_ub = np.vstack((A_ub, i2b(evd[x][1], 1)))
+    A_ub = np.vstack((A_ub, i2b(evd[x][2], 1)))
 for x in sorted(svd):
-    A_ub = np.vstack((A_ub, i2b(svd[x][1], 0)))
+    A_ub = np.vstack((A_ub, i2b(svd[x][2], 0)))
 A_ub = A_ub.T
 print(A_ub)
 # write the file
@@ -117,7 +117,7 @@ np.save('linear_bounds/b_ub.npy', b_ub)
 ##
 # bounds
 #
-bounds = [(evd[l][0], float('inf')) for l in sorted(evd)] + [(svd[l][0], float('inf')) for l in sorted(svd)]
+bounds = [(evd[l][0], evd[l][1]) for l in sorted(evd)] + [(svd[l][0], svd[l][1]) for l in sorted(svd)]
 # write the file
 with open('linear_bounds/bounds.txt', 'w') as fp:
     fp.write('\n'.join('%s %s' % x for x in bounds))

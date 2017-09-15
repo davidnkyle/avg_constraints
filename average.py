@@ -11,7 +11,15 @@ b_ub = np.load('linear_bounds/b_ub.npy')
 
 number_of_variables = len(A_ub[1,:])
 
-status = opt.linprog([1]*number_of_variables, A_ub, b_ub, bounds=bounds).status
+eq_con = {0:250} # make additional constraints here
+
+A_eq = np.zeros((len(eq_con), number_of_variables))
+b_eq = []
+for i in range(len(eq_con)):
+    A_eq[i,sorted(eq_con)[i]] = 1
+    b_eq.append(eq_con[sorted(eq_con)[i]])
+
+status = opt.linprog([1]*number_of_variables, A_ub, b_ub, bounds=bounds, A_eq=A_eq, b_eq=b_eq).status
 if(status == 2):
     print('infeasible')
 elif status == 0:
@@ -22,15 +30,15 @@ elif status == 0:
         c_max = [0 for i in range(number_of_variables)]
         c_min[i] = 1
         c_max[i] = -1
-        cube_low.append(opt.linprog(c_min, A_ub, b_ub, bounds=bounds).x[i])
-        cube_high.append(opt.linprog(c_max, A_ub, b_ub, bounds=bounds).x[i])
+        cube_low.append(opt.linprog(c_min, A_ub, b_ub, bounds=bounds, A_eq=A_eq, b_eq=b_eq).x[i])
+        cube_high.append(opt.linprog(c_max, A_ub, b_ub, bounds=bounds, A_eq=A_eq, b_eq=b_eq).x[i])
 
     def find_center(A_ub, b_ub, cube_low, cube_high, iterations):
         total = np.zeros(number_of_variables)
         success = 0
         for i in range(iterations):
             x = np.random.uniform(cube_low, cube_high, number_of_variables)
-            if all(A_ub.dot(x) <= b_ub):
+            if all(A_ub.dot(x) <= b_ub) and all(A_eq.dot(x) == b_eq):
                 total += x
                 success += 1
         if success > 100:
@@ -54,4 +62,4 @@ elif status == 0:
     write_csv_matrix2('evmx', 'evlabels', 'evmx')
     write_csv_matrix2('svmx', 'svlabels', 'svmx')
 
-
+print(center)
